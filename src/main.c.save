@@ -1,0 +1,262 @@
+#include <stdio.h>
+#include <util.h>
+#include <vida.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+
+
+#define TAMANO 10
+#define GENERACION 2
+/*#define TIEMPO 1000*/
+#define CELULAS 30
+
+char **crearSimulacion(int filas, int columnas);
+void begin(int filas,int columnas, int celulas);
+void reglas(char **simulacion, int filas, int columnas);
+//struct juego_de_vida *juego;
+
+
+int main(int argc, char **argv){
+	
+	char opcion;	
+	
+	//long fila, columna, generacion, tiempo, celula;
+	long fila = TAMANO;
+	long columna =TAMANO;
+	long generacion = GENERACION;
+	//long tiempo= TIEMPO;
+	long celula= CELULAS;
+
+
+	while ((opcion= getopt(argc, argv, "f: c: g: s: i: "))!= -1){
+		switch(opcion){
+
+			case 'f':
+				fila = atol(optarg);
+				break;
+			case 'c':				
+				columna = atol(optarg);
+				break;
+			case 'g':				
+				generacion = atol(optarg);
+				break;
+			/*case 's':				
+				tiempo = atol(optarg);
+				break;*/			
+			case 'i':
+				//Supongo que esto es el # de celulas vivas que ingresa el usuario?
+				celula = atol(optarg);
+				break;
+			
+		}
+	}
+	begin(fila, columna, celula);
+	usleep(2000000);
+	printf("%li\n",generacion);
+	return 0;
+}
+
+/*Metodo: crearSimulacion
+ *Funcion: Crear el tablero 2D mediante las filas y columnas pasadas por parametro
+ *OJO: Se utiliza notacion de puntero en lugar de simulacion[x][y]
+ * */
+char **crearSimulacion(int filas, int columnas)
+{
+	char **simulacion = (char **)malloc(filas * sizeof(char *));
+
+      	for(int x = 0; x < filas; x++)	
+	{
+		*(simulacion + x) = (char *)malloc(columnas * sizeof(char));
+	}
+	for (int x = 0; x < filas; x++)
+	{
+		for(int y = 0; y < columnas; y++)
+		{
+			simulacion[x][y] = '0';
+		}
+
+	}
+	return simulacion;
+}
+♠
+/*Metodo: begin
+ *Funcion: Me inicializa el tablero con los simbolos que representan a las celulas vivas y
+ *a las celulas muertas.
+ *Se toma por parametro las filas y las columnas ingresadas como parametro de la funcion principal
+ * */
+
+void begin(int filas, int columnas, int celulas)
+{
+	printf("Inicio del tablero\n");
+	char **simulacion = crearSimulacion(filas, columnas);	
+
+	llenar_matriz_azar(simulacion, filas, columnas, celulas);
+	dibujar_grilla(simulacion, filas, columnas);                                                           
+	printf("Final del tablero\n\n\n\n");
+
+	reglas(simulacion, filas, columnas);
+	free(simulacion);
+}
+
+
+/*Metodo: reglas
+ *Funcion: Define la logica del juego con respecto al tablero entero, puede haber errores 
+ *con las esquinas
+ *Reglas:
+ *Any live cell with fewer than two live neighbours dies, as if by underpopulation.
+ *Any live cell with two or three live neighbours lives on to the next generation.
+ *Any live cell with more than three live neighbours dies, as if by overpopulation.
+ *Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+ */
+
+void reglas(char **simulacion, int filas, int columnas)
+{
+	int vivos = 0;
+	char **nextGen = (char **)malloc(filas*sizeof(char *));
+	for(int r = 0; r < filas; r++)
+	{
+		*(nextGen + r) = (char *)malloc(columnas * sizeof(char));
+	}
+	if(nextGen == NULL){
+		printf("NULL\n");
+		return;
+	}
+	//No tomo en cuenta las esquinas
+	for(int i = 1; i < filas -1; i++)
+	{	
+		for(int j = 1; j < columnas -1; j++)
+		{
+			for(int x = -1; x <= 1; x++)
+			{
+				for(int y = -1; y <= 1; y++)
+				{
+					if(*(*(simulacion+(i+x)) + (j+y)) == 'X')
+					{
+						vivos++;
+					}
+				}
+			}vivos--;
+			//Aplicacion de reglas
+			if(*(*(simulacion + i)+j) == 'X' && vivos < 2){
+				nextGen[i][j] = ' ';
+			}else if(*(*(simulacion + i) + j) == 'X' && vivos > 3){
+				nextGen[i][j] = ' ';	
+			}else if(*(*(simulacion + i) + j) == ' ' && vivos == 3){
+				nextGen[i][j] = 'X';
+			}else if(*(*(simulacion + i) + j) == 'X' && (vivos == 2 || vivos == 3)){
+				nextGen[i][j] = 'X';
+			}else{
+				nextGen[i][j] = simulacion[i][j];
+			}
+				
+		}
+
+	}
+	int cv=0;
+	//Esquina superior izquierda
+	if (simulacion[0][0]=='X' || simulacion[0][0] ==' ' ){
+		if(simulacion[1][0]=='X'){
+			++cv;
+		}
+		if(simulacion[0][1]=='X'){
+			++cv;
+		}
+		if(simulacion[1][1]=='X'){
+			++cv;
+		}
+		if(simulacion[0][0]=='X'){
+			if(cv>=4 || cv <=1){
+				nextGen[0][0]=' ';
+			}else if(cv==2 || cv==3){
+				nextGen[0][0]='X';
+			}
+		}
+		else{
+			if(cv==3){
+				nextGen[0][0]='X';
+			}
+		}
+		cv=0;
+	}
+
+	//Esquina superior derecha
+	if(simulacion[0][columnas-1]=='X' || simulacion[0][columnas-1]==' '){
+		if(simulacion[0][columnas-2]=='X'){
+			++cv;			
+		}
+		if(simulacion[1][columnas-2]=='X'){
+			++cv;
+		}
+		if(simulacion[1][columnas-1]=='X'){
+			++cv;
+		}
+		if(simulacion[0][columnas-1]=='X'){
+			if(cv>=4 || cv <=1){
+				nextGen[0][columnas-1]=' ';
+			}else if(cv==2 || cv==3){
+				nextGen[0][columnas-1]='X';
+			}
+		}
+		else{
+			if(cv==3){
+				nextGen[0][columnas-1]='X';
+			}
+		}
+		cv=0;
+	}
+
+	//Esquina inferior izquierda
+	if(simulacion[filas-1][0]=='X' || simulacion[filas-1][0]==' '){
+		if(simulacion[filas-2][0]=='X'){
+			++cv;
+		}
+		if(simulacion[filas-2][1]=='X'){
+			++cv;
+		}
+		if(simulacion[filas-1][1]=='X'){
+			++cv;
+		}
+		if(simulacion[filas-1][0]=='X'){
+			if(cv>=4 || cv<=1){
+				nextGen[filas-1][0]=' ';
+			}else if(cv==2 || cv==3){
+				nextGen[filas-1][0]='X';
+			}
+		}
+		else{
+			if(cv==3){
+				nextGen[filas-1][0]='X';
+			}
+		}
+		cv=0;
+	}
+	//Esquina inferior derecha
+	if(simulacion[filas-1][columnas-1]=='X' || simulacion[filas-1][columnas-1]==' '){
+		if(simulacion[filas-2][columnas-1]=='X'){
+			++cv;
+		}
+		if(simulacion[filas-2][columnas-2]=='X'){
+			++cv;
+		}
+		if(simulacion[filas-1][columnas-2]=='X'){
+			++cv;
+		}
+		if(simulacion[filas-1][columnas-1]=='X'){
+			if(cv>4 || cv<=1){
+				nextGen[filas-1][columnas-1]=' ';
+			}else if(cv==2 ||cv==3){
+				nextGen[filas-1][filas-2]='X';
+			}
+
+		}
+		else{
+			if(cv==3){
+				nextGen[filas-1][columnas-1]='X';
+			}
+		}
+		cv=0;	
+	}
+
+	dibujar_grilla(nextGen, filas, columnas);
+}

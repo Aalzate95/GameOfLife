@@ -1,0 +1,17 @@
+Generacion: 50
+	Número de células que nacieron en esta generacion: 101
+	Número de células que murieron en esta generacion: 28
+	Número de células que han nacido desde generacion 0: 13099
+	Número de células que han muerto desde generacion 0: 4905
+	Promedio de celulas que han nacido por generacion: 251.00
+	Promedio de celulas que han muerto por generacion: 98.00
+==============================
+Formas detectadas: 
+
+	Bloque: 5
+	Colmena vertical: 0
+	Colmena horizontal: 1
+	Hogaza: 0
+	Bote: 1
+	Tina: 0
+==============================
